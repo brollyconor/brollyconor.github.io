@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chaos Cards</title>
+<style>
+:root{--bg:#fbf3e4;--card:#fff9ee;--ink:#2a1a12;--muted:#7a6252;--line:#e0cdb0;--accent:#e8651a;--onacc:#fff;--easy:#f3e1c2;--med:#e6d6f0;--chaos:#f6d3cf;--ok:#2f8f4e;--bad:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#140d1a;--card:#1d1326;--ink:#f3e9dc;--muted:#a592b3;--line:#3a2a47;--accent:#ff8a2b;--onacc:#1a0f10;--easy:#2a1d36;--med:#34204a;--chaos:#4a1f2a;--ok:#5fd18a;--bad:#ff7a6b}}
+:root[data-theme="dark"]{--bg:#140d1a;--card:#1d1326;--ink:#f3e9dc;--muted:#a592b3;--line:#3a2a47;--accent:#ff8a2b;--onacc:#1a0f10;--easy:#2a1d36;--med:#34204a;--chaos:#4a1f2a;--ok:#5fd18a;--bad:#ff7a6b}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+main{max-width:520px;margin:0 auto;padding:16px 14px 32px}
+h1{margin:4px 0 2px;font-size:28px;text-align:center}
+h2{font-size:17px;margin:20px 0 8px}
+.sub{text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.45}
+button,input{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:var(--onacc);border-color:var(--accent);font-weight:bold;width:100%;margin-top:10px}
+input{width:100%}
+.row{display:flex;gap:8px;align-items:center}
+.task{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.task.easy{background:var(--easy)}.task.med{background:var(--med)}.task.chaos{background:var(--chaos)}
+.tier{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tt{font-size:16px;line-height:1.35;margin-bottom:10px}
+.hidden .tt{filter:blur(7px);user-select:none}
+.task.done .tt{text-decoration:line-through;opacity:.7}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:6px 10px;border-radius:999px;flex:none}
+.chip.on{background:var(--accent);color:var(--onacc);border-color:var(--accent)}
+.chip.caught.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.bar{display:flex;gap:8px;margin-bottom:10px}
+.bar button{flex:1;font-size:14px}
+.g{display:flex;gap:8px;margin-top:8px}
+.g button{flex:1}
+.g .r{border-color:var(--ok)}.g .w{border-color:var(--bad)}
+.g button:disabled{opacity:.4}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:4px 0}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.total td{border-top:1px solid var(--line);font-weight:bold;font-size:18px;padding-top:8px}
+.small{font-size:12px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>🎭 Chaos Cards</h1>
+<p class="sub">Three secret tasks. Don’t get caught.</p>
+<div id="app"></div>
+</main>
+
+<script>
+(function(){
+var WORDS=["hamster","spreadsheet","lighthouse","sourdough","semicolon","mortgage","dinosaur","apparently","cauliflower","Tuesday","umbrella","blueprint"];
+var NAMES=["Gary","Priya from accounts","Big Dave","Linda"];
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+var POOL={
+easy:[
+{t:"Say hello to everyone who enters the room."},
+{t:"Call someone by the wrong name at least twice."},
+{w:1,t:"Work the word “{w}” into a conversation three times."},
+{t:"Ask three people for a recommendation (show, restaurant, anything) and take it very seriously."},
+{t:"Agree enthusiastically with everything one person says for five minutes."},
+{n:1,t:"Mention your friend “{n}” in two different conversations as if everyone knows them."},
+{t:"Get someone to say “no way” out loud."},
+{t:"Ask three people what they’d do if they won the lottery tomorrow."}
+],
+med:[
+{t:"Fake palm read someone."},
+{t:"Start a toast."},
+{w:1,t:"Get someone else to say the word “{w}” out loud before you do."},
+{t:"Start a clap or chant that at least three others join."},
+{t:"Introduce two people who’ve just met as if they’re old rivals."},
+{t:"Give someone a nickname and get a second person to use it."},
+{t:"Interview someone for a made-up job for two minutes."},
+{t:"Ask three people for advice on the same made-up problem."}
+],
+chaos:[
+{t:"Find the person who has to hide at 10pm. Ask around quietly."},
+{t:"Prevent anyone from starting a toast."},
+{t:"Get the whole room to do something at the same time (cheer, look up, anything)."},
+{t:"Make a dramatic announcement about something trivial, like the snacks."},
+{t:"Get someone to give a speech on a topic you pick."},
+{t:"Start a harmless rumour that the snack table is cursed, and hear it repeated by someone you didn’t tell."}
+]};
+var TIERS=["easy","med","chaos"],LABEL={easy:"Easy",med:"Medium",chaos:"Chaos"};
+var KEY="chaosCards.v1",SLIPS=4;
+var S=null,hidden=false,armed=false;
+
+function make(tier,exclude){
+  var opts=POOL[tier].filter(function(p){return exclude.indexOf(p.t)<0});
+  var p=pick(opts),t=p.t;
+  if(p.w)t=t.replace("{w}",pick(WORDS));
+  if(p.n)t=t.replace("{n}",pick(NAMES));
+  return{k:p.t,t:t,tier:tier,done:false,ev:false,caught:false};
+}
+function deal(name){
+  var tasks=TIERS.map(function(t){return make(t,[])});
+  return{name:name,tasks:tasks,swapped:false,slips:SLIPS,right:0,wrong:0,finished:false};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{var v=localStorage.getItem(KEY);if(v){var o=JSON.parse(v);if(o&&o.tasks&&o.tasks.length===3)return o}}catch(e){}return null}
+
+function calc(){
+  var done=0,ev=0,caught=0;
+  S.tasks.forEach(function(t){if(t.done){done++;if(t.ev)ev++}if(t.caught)caught++});
+  var stealth=(S.finished&&caught===0&&done>0)?2:0;
+  return{done:done,ev:ev,caught:caught,stealth:stealth,
+    total:done+ev+S.right*2-S.wrong-caught+stealth};
+}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+var app=document.getElementById("app");
+function render(){
+  app.innerHTML="";
+  if(!S){renderStart();return}
+  renderGame();
+}
+function renderStart(){
+  var b=el("div","box");
+  b.appendChild(el("p",null,"One card per phone. You’ll get 3 secret tasks. Complete them by the end of the night without anyone guessing them."));
+  b.appendChild(el("p",null,"Keep it kind: nothing that really embarrasses anyone."));
+  var inp=el("input");inp.placeholder="Your name";inp.maxLength=24;
+  b.appendChild(inp);
+  var btn=el("button","primary","Deal my card");
+  btn.onclick=function(){S=deal(inp.value.trim()||"Player");save();render()};
+  b.appendChild(btn);
+  app.appendChild(b);
+}
+function renderGame(){
+  var bar=el("div","bar");
+  var hb=el("button",null,hidden?"👁 Show":"🙈 Hide");
+  hb.onclick=function(){hidden=!hidden;render()};
+  var sb=el("button",null,S.swapped?"Swap used":"🔀 Swap one task");
+  sb.disabled=S.swapped;
+  sb.onclick=function(){
+    var i=prompt?null:null;
+    app.querySelectorAll(".swapbtn").forEach(function(x){x.style.display="inline-block"});
+    sb.textContent="Pick a task to swap ↓";
+  };
+  bar.appendChild(hb);bar.appendChild(sb);app.appendChild(bar);
+
+  var wrap=el("div",hidden?"hidden":"");
+  S.tasks.forEach(function(t,i){
+    var c=el("div","task "+t.tier+(t.done?" done":""));
+    c.appendChild(el("div","tier",LABEL[t.tier]));
+    c.appendChild(el("div","tt",t.t));
+    var ch=el("div","chips");
+    var d=el("button","chip"+(t.done?" on":""),t.done?"✓ Done":"Mark done");
+    d.onclick=function(){t.done=!t.done;if(!t.done)t.ev=false;save();render()};
+    var e=el("button","chip"+(t.ev?" on":""),"📸 Have evidence");
+    e.disabled=!t.done;e.style.opacity=t.done?1:.4;
+    e.onclick=function(){t.ev=!t.ev;save();render()};
+    var k=el("button","chip caught"+(t.caught?" on":""),"🚨 Caught");
+    k.onclick=function(){t.caught=!t.caught;save();render()};
+    ch.appendChild(d);ch.appendChild(e);ch.appendChild(k);
+    if(!S.swapped){
+      var sw=el("button","chip swapbtn","🔀 Swap this");
+      sw.style.display="none";
+      sw.onclick=function(){
+        var ex=S.tasks.map(function(x){return x.k});
+        S.tasks[i]=make(t.tier,ex);S.swapped=true;save();render();
+      };
+      ch.appendChild(sw);
+    }
+    c.appendChild(ch);wrap.appendChild(c);
+  });
+  app.appendChild(wrap);
+  app.appendChild(el("div","small","🚨 Caught: tap it when someone correctly guesses that task. Evidence: have a photo or video ready to show at the reveal."));
+
+  app.appendChild(el("h2",null,"Make a guess"));
+  var gb=el("div","box");
+  gb.appendChild(el("div",null,"Guess slips left: "+S.slips+" of "+SLIPS));
+  gb.appendChild(el("div","small","Tell someone what you think their task is. If they say yes, tap Right. If not, tap Wrong."));
+  var g=el("div","g");
+  var r=el("button","r","✅ Right (+2)"),w=el("button","w","❌ Wrong (−1)");
+  r.disabled=w.disabled=S.slips<=0;
+  r.onclick=function(){S.slips--;S.right++;save();render()};
+  w.onclick=function(){S.slips--;S.wrong++;save();render()};
+  g.appendChild(r);g.appendChild(w);gb.appendChild(g);app.appendChild(gb);
+
+  app.appendChild(el("h2",null,S.name+"’s score"));
+  var c=calc(),sc=el("div","box"),tb=el("table");
+  function row(a,b,cls){var tr=el("tr",cls);tr.appendChild(el("td",null,a));tr.appendChild(el("td",null,b));tb.appendChild(tr)}
+  row("Tasks done ("+c.done+")","+"+c.done);
+  row("Evidence ("+c.ev+")","+"+c.ev);
+  row("Right guesses ("+S.right+")","+"+(S.right*2));
+  row("Wrong guesses ("+S.wrong+")",S.wrong?"−"+S.wrong:"0");
+  row("Times caught ("+c.caught+")",c.caught?"−"+c.caught:"0");
+  if(S.finished)row("Stealth bonus",c.stealth?"+2":"0");
+  row("Total",String(c.total),"total");
+  sc.appendChild(tb);
+  var fb=el("button","primary",S.finished?"Undo finish":"🏁 Finish my night");
+  fb.onclick=function(){S.finished=!S.finished;save();render()};
+  sc.appendChild(fb);
+  sc.appendChild(el("div","small","Finishing adds a +2 stealth bonus if none of your tasks were caught. Read out your total at the reveal."));
+  app.appendChild(sc);
+
+  var rb=el("button",null,"Start over");rb.style.marginTop="16px";rb.style.width="100%";
+  rb.onclick=function(){
+    if(!armed){armed=true;rb.textContent="Tap again to erase this card";setTimeout(function(){armed=false;rb.textContent="Start over"},3000);return}
+    armed=false;S=null;try{localStorage.removeItem(KEY)}catch(e){}render();
+  };
+  app.appendChild(rb);
+}
+S=load();render();
+})();
+</script>
+</body>
+</html>
