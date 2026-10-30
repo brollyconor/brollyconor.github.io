@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trick or Task</title>
+<style>
+:root{--bg:#130a1d;--card:#1f1231;--ink:#f8ebd8;--muted:#b9a2cc;--line:#432b5e;--accent:#ff8a1f;--onacc:#1a0f10;--easy:#2c1a40;--med:#3b2052;--chaos:#4d1b1f;--ok:#8ee0a6;--bad:#ff7a6b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cg transform='translate(16 22)' fill='%23ff8a1f' fill-opacity='.28'%3E%3Cpath d='M20 6c-2-4-8-6-18-4 4 2 4 6 3 9 4-3 7-1 9 3 1-2 3-2 4 0 2-4 5-6 9-3-1-3-1-7 3-9-10-2-16 0-18 4z'/%3E%3C/g%3E%3Cg transform='translate(112 118) scale(.8)' fill='%23b9a2cc' fill-opacity='.22'%3E%3Cpath d='M20 6c-2-4-8-6-18-4 4 2 4 6 3 9 4-3 7-1 9 3 1-2 3-2 4 0 2-4 5-6 9-3-1-3-1-7 3-9-10-2-16 0-18 4z'/%3E%3C/g%3E%3Ccircle cx='120' cy='36' r='2' fill='%23ff8a1f' fill-opacity='.45'/%3E%3Ccircle cx='60' cy='130' r='1.5' fill='%23ffffff' fill-opacity='.3'/%3E%3Ccircle cx='160' cy='160' r='2' fill='%23ff8a1f' fill-opacity='.35'/%3E%3Ccircle cx='28' cy='150' r='1.5' fill='%23b9a2cc' fill-opacity='.4'/%3E%3C/svg%3E");color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+main{max-width:520px;margin:0 auto;padding:16px 14px 32px}
+h1{margin:4px 0 2px;font-size:30px;text-align:center;color:var(--accent);letter-spacing:1px}
+h2{font-size:17px;margin:20px 0 8px}
+.sub{text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.45}
+button,input{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:var(--onacc);border-color:var(--accent);font-weight:bold;width:100%;margin-top:10px}
+input{width:100%}
+.row{display:flex;gap:8px;align-items:center}
+.task{border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.task.easy,.task.custom{background:var(--easy)}.task.custom{border-style:dashed}.task.med{background:var(--med)}.task.chaos{background:var(--chaos)}
+.tier{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.tt{font-size:16px;line-height:1.35;margin-bottom:10px}
+.hidden .tt{filter:blur(7px);user-select:none}
+.task.done .tt{text-decoration:line-through;opacity:.7}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:6px 10px;border-radius:999px;flex:none}
+.chip.on{background:var(--accent);color:var(--onacc);border-color:var(--accent)}
+.chip.caught.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.bar{display:flex;gap:8px;margin-bottom:10px}
+.bar button{flex:1;font-size:14px}
+.g{display:flex;gap:8px;margin-top:8px}
+.g button{flex:1}
+.g .r{border-color:var(--ok)}.g .w{border-color:var(--bad)}
+.g button:disabled{opacity:.4}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:4px 0}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.total td{border-top:1px solid var(--line);font-weight:bold;font-size:18px;padding-top:8px}
+.small{font-size:12px;color:var(--muted);margin-top:8px}
+.ov{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,4,16,.82);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.sheet{background:var(--card);border:1px solid var(--accent);border-radius:18px;padding:20px;max-width:380px;width:100%;text-align:center}
+.sheet h3{margin:0 0 8px;color:var(--accent);font-size:22px}
+.sheet p{margin:0 0 6px;font-size:17px;line-height:1.4}
+</style>
+</head>
+<body>
+<main>
+<h1>🎃 Trick or Task 🎃</h1>
+<p class="sub">Three secret tasks. Don’t get caught.</p>
+<div id="app"></div>
+</main>
+
+<script>
+(function(){
+var WORDS=["hamster","spreadsheet","lighthouse","sourdough","semicolon","mortgage","dinosaur","apparently","cauliflower","Tuesday","umbrella","blueprint","cauldron","graveyard","pumpkin","cobweb"];
+var NAMES=["Gary","Priya from accounts","Big Dave","Linda","Count Gary"];
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+var POOL={
+easy:[
+{t:"Say hello to everyone who enters the room."},
+{t:"Call someone by the wrong name at least twice."},
+{w:1,t:"Work the word “{w}” into a conversation three times."},
+{t:"Ask three people for a recommendation (show, restaurant, anything) and take it very seriously."},
+{t:"Agree enthusiastically with everything one person says for five minutes."},
+{n:1,t:"Mention your friend “{n}” in two different conversations as if everyone knows them."},
+{t:"Get someone to say “no way” out loud."},
+{t:"Ask three people what they’d do if they won the lottery tomorrow."},
+{t:"Ask three people for the backstory of their costume and react with total seriousness."},
+{t:"Trade a piece of candy with someone like it’s a high-stakes business deal."},
+{t:"Ask someone for their favourite scary movie and write it down."},
+{t:"Confidently guess someone’s costume wrong, twice, and be dramatic about it."}
+],
+med:[
+{t:"Fake palm read someone."},
+{t:"Start a toast."},
+{w:1,t:"Get someone else to say the word “{w}” out loud before you do."},
+{t:"Start a clap or chant that at least three others join."},
+{t:"Introduce two people who’ve just met as if they’re old rivals."},
+{t:"Give someone a nickname and get a second person to use it."},
+{t:"Interview someone for a made-up job for two minutes."},
+{t:"Ask three people for advice on the same made-up problem."},
+{t:"Tell someone a two-sentence ghost story and get them to ask “and then what?”"},
+{t:"Fortune-tell someone using only a piece of candy."},
+{t:"Stay in character as your costume for five full minutes."},
+{t:"Start a debate about the best candy and get three people to pick a side."},
+{t:"Tell someone this room is haunted, and give the ghost a name and a backstory."}
+],
+chaos:[
+{t:"Find the person who has to hide at 10pm. Ask around quietly."},
+{t:"Prevent anyone from starting a toast."},
+{t:"Get the whole room to do something at the same time (cheer, look up, anything)."},
+{t:"Make a dramatic announcement about something trivial, like the snacks."},
+{t:"Get someone to give a speech on a topic you pick."},
+{t:"Start a harmless rumour that the snack table is cursed, and hear it repeated by someone you didn’t tell."},
+{t:"Get the room to howl like wolves at the same time."},
+{t:"Hold a mini séance: get three people around a table to summon a ghost of your choosing."},
+{t:"Refuse to enter a room until someone invites you in, vampire-style."},
+{t:"Whisper “wooo” every time someone says a word you pick, until someone else notices."}
+]};
+var TIERS=["easy","med","chaos"],LABEL={easy:"🎃 Easy",med:"🎃🎃 Medium",chaos:"🎃🎃🎃 Chaos",custom:"🕯 Your own"};
+var KEY="trickOrTask.v1",SLIPS=4,DISCARDS=1;
+var S=null,hidden=false,armed=false,picking=false,edit=-1;
+
+function make(tier,exclude){
+  var opts=POOL[tier].filter(function(p){return exclude.indexOf(p.t)<0});
+  var p=pick(opts),t=p.t;
+  if(p.w)t=t.replace("{w}",pick(WORDS));
+  if(p.n)t=t.replace("{n}",pick(NAMES));
+  return{k:p.t,t:t,tier:tier,done:false,ev:false,caught:false};
+}
+function deal(name){
+  var tasks=TIERS.map(function(t){return make(t,[])});
+  return{name:name,tasks:tasks,discards:DISCARDS,slips:SLIPS,right:0,wrong:0,finished:false};
+}
+function save(){if(PREVIEW)return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{var v=localStorage.getItem(KEY);if(v){var o=JSON.parse(v);if(o&&o.tasks&&o.tasks.length===3){if(o.discards===undefined)o.discards=o.swapped?0:DISCARDS;return o}}}catch(e){}return null}
+
+function calc(){
+  var done=0,ev=0,caught=0;
+  S.tasks.forEach(function(t){if(t.done){done++;if(t.ev)ev++}if(t.caught)caught++});
+  var stealth=(S.finished&&caught===0&&done>0)?2:0;
+  return{done:done,ev:ev,caught:caught,stealth:stealth,
+    total:done+ev+S.right*2-S.wrong-caught+stealth};
+}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+var app=document.getElementById("app");
+function render(){
+  app.innerHTML="";
+  if(!S){renderStart();return}
+  renderGame();
+}
+function renderStart(){
+  var b=el("div","box");
+  b.appendChild(el("p",null,"One card per phone. You’ll get 3 secret tasks. Complete them by the end of the night without anyone guessing them. Don’t like one? You can discard it and write your own or take a random one. Get caught or guess wrong? Take a sip (water counts) or draw a trick."));
+  b.appendChild(el("p",null,"Keep it kind: nothing that really embarrasses anyone."));
+  var inp=el("input");inp.placeholder="Your name";inp.maxLength=24;
+  b.appendChild(inp);
+  var btn=el("button","primary","Deal my card");
+  btn.onclick=function(){S=PREVIEW?demo():deal(inp.value.trim()||"Player");save();render()};
+  b.appendChild(btn);
+  app.appendChild(b);
+}
+function renderGame(){
+  if(PREVIEW){var pb=el("div","box","👀 Design preview: sample card, nothing is saved. Tap anything to try it. Your real card is untouched.");pb.style.marginBottom="10px";app.appendChild(pb)}
+  var bar=el("div","bar");
+  var hb=el("button",null,hidden?"👁 Show":"🙈 Hide");
+  hb.onclick=function(){hidden=!hidden;render()};
+  var sb=el("button",null,S.discards>0?(picking?"Pick a task below ↓":"🗑 Discard a task ("+S.discards+" left)"):"No discards left");
+  sb.disabled=S.discards<=0;
+  sb.onclick=function(){picking=!picking;edit=-1;render()};
+  bar.appendChild(hb);bar.appendChild(sb);app.appendChild(bar);
+
+  var wrap=el("div",hidden?"hidden":"");
+  S.tasks.forEach(function(t,i){
+    var c=el("div","task "+t.tier+(t.done?" done":""));
+    c.appendChild(el("div","tier",LABEL[t.tier]));
+    c.appendChild(el("div","tt",t.t));
+    var ch=el("div","chips");
+    var d=el("button","chip"+(t.done?" on":""),t.done?"✓ Done":"Mark done");
+    d.onclick=function(){t.done=!t.done;if(!t.done)t.ev=false;save();render()};
+    var e=el("button","chip"+(t.ev?" on":""),"📸 Have evidence");
+    e.disabled=!t.done;e.style.opacity=t.done?1:.4;
+    e.onclick=function(){t.ev=!t.ev;save();render()};
+    var k=el("button","chip caught"+(t.caught?" on":""),"🚨 Caught");
+    k.onclick=function(){t.caught=!t.caught;if(t.caught)fate={kind:"choose",why:"caught"};save();render()};
+    ch.appendChild(d);ch.appendChild(e);ch.appendChild(k);
+    if(picking&&S.discards>0){
+      var sw=el("button","chip","🗑 Discard this");
+      sw.onclick=function(){edit=i;picking=false;render()};
+      ch.appendChild(sw);
+    }
+    c.appendChild(ch);
+    if(edit===i){
+      var p=el("div","box");p.style.marginTop="10px";
+      p.appendChild(el("div",null,"Replace this task with:"));
+      var rnd=el("button","primary","🎲 A random one");
+      rnd.onclick=function(){
+        var ex=S.tasks.map(function(x){return x.k});
+        S.tasks[i]=PREVIEW?{k:"d"+Date.now(),t:"Sample: a random task lands here.",tier:t.tier==="custom"?"easy":t.tier,done:false,ev:false,caught:false}:make(t.tier==="custom"?pick(TIERS):t.tier,ex);S.discards--;edit=-1;save();render();
+      };
+      var ci=el("input");ci.placeholder="…or write your own task";ci.maxLength=120;ci.style.marginTop="10px";
+      var cb=el("button","primary","✍ Use my task");
+      cb.onclick=function(){
+        var v=ci.value.trim();if(!v){ci.focus();return}
+        S.tasks[i]={k:"custom:"+v,t:v,tier:"custom",done:false,ev:false,caught:false};
+        S.discards--;edit=-1;save();render();
+      };
+      var cc=el("button",null,"Cancel");cc.style.marginTop="8px";cc.style.width="100%";
+      cc.onclick=function(){edit=-1;render()};
+      p.appendChild(rnd);p.appendChild(ci);p.appendChild(cb);p.appendChild(cc);
+      c.appendChild(p);
+    }
+    wrap.appendChild(c);
+  });
+  app.appendChild(wrap);
+  app.appendChild(el("div","small","🚨 Caught: tap it when someone correctly guesses that task. Evidence: have a photo or video ready to show at the reveal."));
+
+  app.appendChild(el("h2",null,"Make a guess"));
+  var gb=el("div","box");
+  gb.appendChild(el("div",null,"Guess slips left: "+S.slips+" of "+SLIPS));
+  gb.appendChild(el("div","small","Tell someone what you think their task is. If they say yes, tap Right. If not, tap Wrong."));
+  var g=el("div","g");
+  var r=el("button","r","✅ Right (+2)"),w=el("button","w","❌ Wrong (−1)");
+  r.disabled=w.disabled=S.slips<=0;
+  r.onclick=function(){S.slips--;S.right++;fate={kind:"info",title:"✅ Nice guess!",msg:"Hand out 2 sips (water counts) or make them draw a trick."};save();render()};
+  w.onclick=function(){S.slips--;S.wrong++;fate={kind:"choose",why:"wrong"};save();render()};
+  g.appendChild(r);g.appendChild(w);gb.appendChild(g);app.appendChild(gb);
+
+  app.appendChild(el("h2",null,S.name+"’s score"));
+  var c=calc(),sc=el("div","box"),tb=el("table");
+  function row(a,b,cls){var tr=el("tr",cls);tr.appendChild(el("td",null,a));tr.appendChild(el("td",null,b));tb.appendChild(tr)}
+  row("Tasks done ("+c.done+")","+"+c.done);
+  row("Evidence ("+c.ev+")","+"+c.ev);
+  row("Right guesses ("+S.right+")","+"+(S.right*2));
+  row("Wrong guesses ("+S.wrong+")",S.wrong?"−"+S.wrong:"0");
+  row("Times caught ("+c.caught+")",c.caught?"−"+c.caught:"0");
+  row("Sips · tricks done (no points)",(S.sips||0)+" · "+(S.tricks||0));
+  if(S.finished)row("Stealth bonus",c.stealth?"+2":"0");
+  row("Total",String(c.total),"total");
+  sc.appendChild(tb);
+  var fb=el("button","primary",S.finished?"Undo finish":"🏁 Finish my night");
+  fb.onclick=function(){S.finished=!S.finished;save();render()};
+  sc.appendChild(fb);
+  sc.appendChild(el("div","small","Finishing adds a +2 stealth bonus if none of your tasks were caught. Read out your total at the reveal."));
+  app.appendChild(sc);
+
+  var rb=el("button",null,PREVIEW?"Exit preview":"Start over");rb.style.marginTop="16px";rb.style.width="100%";
+  rb.onclick=function(){
+    if(PREVIEW){location.hash="";return}
+    if(!armed){armed=true;rb.textContent="Tap again to erase this card";setTimeout(function(){armed=false;rb.textContent="Start over"},3000);return}
+    armed=false;S=null;try{localStorage.removeItem(KEY)}catch(e){}render();
+  };
+  app.appendChild(rb);
+  if(fate)app.appendChild(overlay());
+}
+var fate=null;
+var TRICKS=[
+"Cackle like a witch for ten seconds.",
+"Whisper everything you say for the next two minutes.",
+"Hold a statue pose until someone laughs.",
+"Confess your most irrational fear to the nearest person.",
+"Compliment the person on your left in your best vampire voice.",
+"Howl at an imaginary moon.",
+"Do a dramatic slow-motion walk to the snack table.",
+"Introduce yourself to someone as a ghost who doesn’t know they’re dead.",
+"Share one fun fact about your costume in a spooky voice.",
+"Stumble around like a zombie for twenty seconds.",
+"Let the group pick your next dance move.",
+"Hum a spooky theme tune until someone guesses it."
+];
+function overlay(){
+  var ov=el("div","ov"),sh=el("div","sheet");
+  function close(){fate=null;render()}
+  if(fate.kind==="choose"){
+    sh.appendChild(el("h3",null,fate.why==="caught"?"🚨 You’ve been caught!":"❌ Wrong guess!"));
+    sh.appendChild(el("p",null,"Pay the price: take a sip or draw a trick."));
+    var a=el("button","primary","🥂 Take a sip (water counts)");
+    a.onclick=function(){S.sips=(S.sips||0)+1;save();fate={kind:"info",title:"🥂 Cheers!",msg:"Sip taken. Back to scheming."};render()};
+    var b=el("button","primary","🎭 Draw a trick");
+    b.onclick=function(){fate={kind:"trick",text:pick(TRICKS)};render()};
+    sh.appendChild(a);sh.appendChild(b);
+  }else if(fate.kind==="trick"){
+    sh.appendChild(el("h3",null,"🎭 Your trick"));
+    sh.appendChild(el("p",null,fate.text));
+    var d=el("button","primary","Done ✓");
+    d.onclick=function(){S.tricks=(S.tricks||0)+1;save();close()};
+    sh.appendChild(d);
+  }else{
+    sh.appendChild(el("h3",null,fate.title));
+    sh.appendChild(el("p",null,fate.msg));
+    var o=el("button","primary","OK");o.onclick=close;sh.appendChild(o);
+  }
+  ov.appendChild(sh);return ov;
+}
+var PREVIEW=false;
+function demo(){return{name:"Sample",tasks:[
+{k:"d1",t:"Sample: an easy task goes here.",tier:"easy",done:true,ev:true,caught:false},
+{k:"d2",t:"Sample: a medium task goes here.",tier:"med",done:false,ev:false,caught:false},
+{k:"d3",t:"Sample: a chaos task that got caught.",tier:"chaos",done:false,ev:false,caught:true}],
+discards:1,slips:2,right:1,wrong:0,finished:false}}
+function route(){
+  var h=location.hash;
+  PREVIEW=h==="#preview"||h==="#preview-start";
+  if(h==="#preview")S=demo();
+  else if(h==="#preview-start")S=null;
+  else S=load();
+  picking=false;edit=-1;render();
+}
+window.addEventListener("hashchange",route);
+route();
+})();
+</script>
+</body>
+</html>
